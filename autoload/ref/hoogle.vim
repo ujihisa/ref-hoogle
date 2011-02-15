@@ -24,17 +24,16 @@ endfunction
 
 
 function! s:source.get_body(query)  " {{{2
-  let query = substitute(a:query, " ::.*", "", "")
-  let query = substitute(query, '^\(\u\)', '+\1', "")
+  let query = s:format(a:query)
   let res = s:hoogle(query)
   if res.stderr != ''
     throw matchstr(res.stderr, '^.\{-}\ze\n')
   endif
 
   let content = split(res.stdout, "\n")
-  return len(content) > 0 && a:query == content[0] ?
-        \ {'query': a:query, 'body': s:hoogle('--info '. query).stdout} :
-        \ map(content, "substitute(v:val, ' ', '.', '')")
+  return len(content) > 0 && query == s:format(content[0]) ?
+        \ {'query': a:query, 'body': s:replaceurl(s:hoogle('--info '. query).stdout)} :
+        \ content
 endfunction
 
 
@@ -47,10 +46,23 @@ endfunction
 
 
 function! s:source.get_keyword()  " {{{2
+  " case 1: full line module+function+type style
+  "   Prelude map :: (a -> b) -> [a] -> [b]
+  let line = getline('.')
+  if line =~ '\u\w* \w\+ ::'
+    return line
+  endif
+  " case 2: full line module
+  "   module Data.Map
+  "   this is not implemented yet
+  " case 3: a word module+function
+  "   Prelude.map
   let moduleandfunc = ref#get_text_on_cursor("[a-z][a-z0-9.']\\+")
   let [dummy0, dummy1, module, func; dummy2] = matchlist(moduleandfunc, '\(\(.*\)\.\)\?\(.*\)', 0)
   if len(module) > 0
-    return printf('--info %s.%s', module, func)
+    return printf('+%s %s', module, func)
+  " case 4: a word
+  "   map
   else
     return func
   endif
@@ -194,10 +206,28 @@ function! s:hoogle(args)  " {{{2
   return ref#system(ref#to_list(g:ref_hoogle_cmd) + ref#to_list(a:args))
 endfunction
 
+" 'Prelude map :: ...' -> '+Prelude map'
+function! s:format(query)
+  let query = substitute(a:query, " ::.*", "", "")
+  let query = substitute(query, '^\(\u\)', '+\1', "")
+  return query
+endfunction
 
-
-
-
+" hoogle url is broken like
+"   http://hackage.haskell.org/packages/archive/HUnit/1.2.0.3/doc/html/Test-HUnit-Base.html#v:@=?
+" this should be
+"  http://hackage.haskell.org/packages/archive/HUnit/1.2.0.3/doc/html/Test-HUnit-Base.html#v:-64--61--63- 
+function! s:replaceurl(body)
+  let body = split(a:body, "\n")
+  let a = body[-1]
+  let [b, c] = split(a, '#v:')
+  if c =~ '\w'
+    return body
+  else
+    let d = map(split(c, '\zs'), '"-" . char2nr(v:val) . "-"')
+    return join(body[0:-2], "\n") . printf("\n%s#v:%s", b, join(d, ''))
+  endif
+endfunction
 
 function! ref#hoogle#define()  " {{{2
   return copy(s:source)
