@@ -1,6 +1,6 @@
 *ref-hoogle.txt*	A ref source for Hoogle the Haskell API search engine.
 
-Version: 0.0.1
+Version: 1.0.0
 Author : ujihisa <ujihisa at gmail com>
 License: Creative Commons Attribution 2.1 Japan License
          <http://creativecommons.org/licenses/by/2.1/jp/deed.en>
@@ -45,6 +45,8 @@ BUGS						*ref-hoogle-bugs*
 ==============================================================================
 CHANGELOG					*ref-hoogle-changelog*
 
+1.0.0	Feb 15 2011
+	- Initial release of |ref-hoogle| independently from vim-ref core.
 0.4.0	Fri Nov 12 2010
 	- Initial release of |ref-hoogle|
 
