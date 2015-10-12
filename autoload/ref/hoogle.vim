@@ -203,10 +203,14 @@ endfunction
 
 
 function! s:hoogle(args)  " {{{2
-  return ref#system(ref#to_list(g:ref_hoogle_cmd) + ref#to_list(a:args))
+  " if You want to show query from type, Don't split args
+  " Exam :Ref hoogle a -> a
+  let query = (match(a:args, '->') > -1) ? [a:args] : ref#to_list(a:args)
+  return ref#system(ref#to_list(g:ref_hoogle_cmd) + query)
 endfunction
 
 " 'Prelude map :: ...' -> '+Prelude map'
+"
 function! s:format(query)
   let query = substitute(a:query, " ::.*", "", "")
   let query = substitute(query, '^\(\u\)', '+\1', "")
