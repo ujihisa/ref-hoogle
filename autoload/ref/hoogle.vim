@@ -205,7 +205,12 @@ endfunction
 function! s:hoogle(args)  " {{{2
   " if You want to show query from type, Don't split args
   " Exam :Ref hoogle a -> a
-  let query = (match(a:args, '->') > -1) ? [a:args[1:]] : ref#to_list(a:args)
+  if match(a:args, '->') > -1
+    let query = a:args[0] ==# '+' ? [a:args[1:]]
+    \                             : [a:args]
+  else
+    let query = ref#to_list(a:args)
+  endif
   return ref#system(ref#to_list(g:ref_hoogle_cmd) + query)
 endfunction
 
